@@ -262,7 +262,8 @@ namespace OWASP.WebGoat.NET.App_Code.DB
 
         public string AddComment(string productCode, string email, string comment)
         {
-            string sql = "insert into Comments(productCode, email, comment) values ('" + productCode + "','" + email + "','" + comment + "');";
+            //string sql = "insert into Comments(productCode, email, comment) values ('" + productCode + "','" + email + "','" + comment + "');";
+            string sql = "insert into Comments(productCode, email, comment) values (@productCode, @email, @comment);";
             string output = null;
             
             try
@@ -272,6 +273,9 @@ namespace OWASP.WebGoat.NET.App_Code.DB
                 {
                     connection.Open();
                     SqliteCommand command = new SqliteCommand(sql, connection);
+                    command.Parameters.AddWithValue("@productCode", productCode);
+                    command.Parameters.AddWithValue("@email", email);
+                    command.Parameters.AddWithValue("@comment", comment);
                     command.ExecuteNonQuery();
                 }
             }
@@ -286,7 +290,8 @@ namespace OWASP.WebGoat.NET.App_Code.DB
 
         public string UpdateCustomerPassword(int customerNumber, string password)
         {
-            string sql = "update CustomerLogin set password = '" + Encoder.Encode(password) + "' where customerNumber = " + customerNumber;
+            //string sql = "update CustomerLogin set password = '" + Encoder.Encode(password) + "' where customerNumber = " + customerNumber;
+            string sql = "update CustomerLogin set password = @encodedPassword where customerNumber = @customerNumber";
             string output = null;
             try
             {
@@ -296,7 +301,8 @@ namespace OWASP.WebGoat.NET.App_Code.DB
                     connection.Open();
 
                     SqliteCommand command = new SqliteCommand(sql, connection);
-                
+                    command.Parameters.AddWithValue("@encodedPassword", Encoder.Encode(password));
+                    command.Parameters.AddWithValue("@customerNumber", customerNumber);
                     int rows_added = command.ExecuteNonQuery();
                     
                     log.Info("Rows Added: " + rows_added + " to comment table");
