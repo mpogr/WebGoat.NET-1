@@ -270,7 +270,8 @@ namespace OWASP.WebGoat.NET.App_Code.DB
 
         public string AddComment(string productCode, string email, string comment)
         {
-            string sql = "insert into Comments(productCode, email, comment) values ('" + productCode + "','" + email + "','" + comment + "');";
+            //string sql = "insert into Comments(productCode, email, comment) values ('" + productCode + "','" + email + "','" + comment + "');";
+            string sql = "insert into Comments(productCode, email, comment) values (@productCode,@email,@comment);";
             string output = null;
             
             try
@@ -280,6 +281,9 @@ namespace OWASP.WebGoat.NET.App_Code.DB
                 {
                     connection.Open();
                     MySqlCommand command = new MySqlCommand(sql, connection);
+                    command.Parameters.AddWithValue("@productCode", productCode); 
+                    command.Parameters.AddWithValue("@email", email); 
+                    command.Parameters.AddWithValue("@comment", comment); 
                     command.ExecuteNonQuery();
                 }
             }
@@ -294,7 +298,8 @@ namespace OWASP.WebGoat.NET.App_Code.DB
 
         public string UpdateCustomerPassword(int customerNumber, string password)
         {
-            string sql = "update CustomerLogin set password = '" + Encoder.Encode(password) + "' where customerNumber = " + customerNumber;
+            //string sql = "update CustomerLogin set password = '" + Encoder.Encode(password) + "' where customerNumber = " + customerNumber;
+            string sql = "update CustomerLogin set password = @encodedPassword where customerNumber = @customerNumber";
             string output = null;
             try
             {
@@ -302,7 +307,8 @@ namespace OWASP.WebGoat.NET.App_Code.DB
                 using (MySqlConnection connection = new MySqlConnection(_connectionString))
                 {
                     MySqlCommand command = new MySqlCommand(sql, connection);
-                
+                    command.Parameters.AddWithValue("@encodedPassword", Encoder.Encode(password)); 
+                    command.Parameters.AddWithValue("@customerNumber", customerNumber); 
                     int rows_added = command.ExecuteNonQuery();
                     
                     log.Info("Rows Added: " + rows_added + " to comment table");
@@ -318,8 +324,11 @@ namespace OWASP.WebGoat.NET.App_Code.DB
 
         public string[] GetSecurityQuestionAndAnswer(string email)
         {
+            //string sql = "select SecurityQuestions.question_text, CustomerLogin.answer from CustomerLogin, " + 
+            //    "SecurityQuestions where CustomerLogin.email = '" + email + "' and CustomerLogin.question_id = " +
+            //    "SecurityQuestions.question_id;";
             string sql = "select SecurityQuestions.question_text, CustomerLogin.answer from CustomerLogin, " + 
-                "SecurityQuestions where CustomerLogin.email = '" + email + "' and CustomerLogin.question_id = " +
+                "SecurityQuestions where CustomerLogin.email = @email and CustomerLogin.question_id = " +
                 "SecurityQuestions.question_id;";
                 
             string[] qAndA = new string[2];
@@ -327,7 +336,7 @@ namespace OWASP.WebGoat.NET.App_Code.DB
             using (MySqlConnection connection = new MySqlConnection(_connectionString))
             {
                 MySqlDataAdapter da = new MySqlDataAdapter(sql, connection);
-                
+                da.SelectCommand.Parameters.AddWithValue("@email", email); 
                 DataSet ds = new DataSet();
                 da.Fill(ds);
 
@@ -351,8 +360,10 @@ namespace OWASP.WebGoat.NET.App_Code.DB
                 using (MySqlConnection connection = new MySqlConnection(_connectionString))
                 {
                     //get data
-                    string sql = "select * from CustomerLogin where email = '" + email + "';";
+                    //string sql = "select * from CustomerLogin where email = '" + email + "';";
+                    string sql = "select * from CustomerLogin where email = @email;";
                     MySqlDataAdapter da = new MySqlDataAdapter(sql, connection);
+                    da.SelectCommand.Parameters.AddWithValue("@email", email);
                     DataSet ds = new DataSet();
                     da.Fill(ds);
 
@@ -391,8 +402,10 @@ namespace OWASP.WebGoat.NET.App_Code.DB
         
             using (MySqlConnection connection = new MySqlConnection(_connectionString))
             {
-                string sql = "select * from Orders where customerNumber = " + customerID;
+                //string sql = "select * from Orders where customerNumber = " + customerID;
+                string sql = "select * from Orders where customerNumber = @customerID";
                 MySqlDataAdapter da = new MySqlDataAdapter(sql, connection);
+                da.SelectCommand.Parameters.AddWithValue("@customerID", customerID);
                 DataSet ds = new DataSet();
                 da.Fill(ds);
 
@@ -412,12 +425,16 @@ namespace OWASP.WebGoat.NET.App_Code.DB
 
             using (MySqlConnection connection = new MySqlConnection(_connectionString))
             {
-                sql = "select * from Products where productCode = '" + productCode + "'";
+                //sql = "select * from Products where productCode = '" + productCode + "'";
+                sql = "select * from Products where productCode = @productCode";
                 da = new MySqlDataAdapter(sql, connection);
+                da.SelectCommand.Parameters.AddWithValue("@productCode", productCode);
                 da.Fill(ds, "products");
 
-                sql = "select * from Comments where productCode = '" + productCode + "'";
+                //sql = "select * from Comments where productCode = '" + productCode + "'";
+                sql = "select * from Products where productCode = @productCode";
                 da = new MySqlDataAdapter(sql, connection);
+                da.SelectCommand.Parameters.AddWithValue("@productCode", productCode);
                 da.Fill(ds, "comments");
 
                 DataRelation dr = new DataRelation("prod_comments",
@@ -433,18 +450,26 @@ namespace OWASP.WebGoat.NET.App_Code.DB
         public DataSet GetOrderDetails(int orderNumber)
         {
 
+            //string sql = "select Customers.customerName, Orders.customerNumber, Orders.orderNumber, Products.productName, " + 
+            //    "OrderDetails.quantityOrdered, OrderDetails.priceEach, Products.productImage " + 
+            //    "from OrderDetails, Products, Orders, Customers where " + 
+            //    "Customers.customerNumber = Orders.customerNumber " + 
+            //    "and OrderDetails.productCode = Products.productCode " + 
+            //    "and Orders.orderNumber = OrderDetails.orderNumber " + 
+            //    "and OrderDetails.orderNumber = " + orderNumber;
             string sql = "select Customers.customerName, Orders.customerNumber, Orders.orderNumber, Products.productName, " + 
                 "OrderDetails.quantityOrdered, OrderDetails.priceEach, Products.productImage " + 
                 "from OrderDetails, Products, Orders, Customers where " + 
                 "Customers.customerNumber = Orders.customerNumber " + 
                 "and OrderDetails.productCode = Products.productCode " + 
                 "and Orders.orderNumber = OrderDetails.orderNumber " + 
-                "and OrderDetails.orderNumber = " + orderNumber;
+                "and OrderDetails.orderNumber = @orderNumber";
             
             
             using (MySqlConnection connection = new MySqlConnection(_connectionString))
             {
                 MySqlDataAdapter da = new MySqlDataAdapter(sql, connection);
+                da.SelectCommand.Parameters.AddWithValue("@orderNumber", orderNumber);
                 DataSet ds = new DataSet();
                 da.Fill(ds);
 
@@ -459,8 +484,10 @@ namespace OWASP.WebGoat.NET.App_Code.DB
         {
             using (MySqlConnection connection = new MySqlConnection(_connectionString))
             {
-                string sql = "select * from Payments where customerNumber = " + customerNumber;
+                //string sql = "select * from Payments where customerNumber = " + customerNumber;
+                string sql = "select * from Payments where customerNumber = @customerNumber";
                 MySqlDataAdapter da = new MySqlDataAdapter(sql, connection);
+                da.SelectCommand.Parameters.AddWithValue("@customerNumber", customerNumber);
                 DataSet ds = new DataSet();
                 da.Fill(ds);
 
@@ -492,12 +519,16 @@ namespace OWASP.WebGoat.NET.App_Code.DB
             using (MySqlConnection connection = new MySqlConnection(_connectionString))
             {
 
-                sql = "select * from Categories" + catClause;
+                //sql = "select * from Categories" + catClause;
+                sql = "select * from Categories @catClause";
                 da = new MySqlDataAdapter(sql, connection);
+                da.SelectCommand.Parameters.AddWithValue("@catClause", catClause);
                 da.Fill(ds, "categories");
 
-                sql = "select * from Products" + catClause;
+                //sql = "select * from Categories" + catClause;
+                sql = "select * from Categories @catClause";
                 da = new MySqlDataAdapter(sql, connection);
+                da.SelectCommand.Parameters.AddWithValue("@catClause", catClause);
                 da.Fill(ds, "products");
 
 
@@ -514,12 +545,13 @@ namespace OWASP.WebGoat.NET.App_Code.DB
 
         public DataSet GetEmailByName(string name)
         {
-            string sql = "select firstName, lastName, email from Employees where firstName like '" + name + "%' or lastName like '" + name + "%'";
-            
+            //string sql = "select firstName, lastName, email from Employees where firstName like '" + name + "%' or lastName like '" + name + "%'";
+            string sql = "select firstName, lastName, email from Employees where firstName like @name% or lastName like @name%";
             
             using (MySqlConnection connection = new MySqlConnection(_connectionString))
             {
                 MySqlDataAdapter da = new MySqlDataAdapter(sql, connection);
+                da.SelectCommand.Parameters.AddWithValue("@name", name);
                 DataSet ds = new DataSet();
                 da.Fill(ds);
 
@@ -556,12 +588,13 @@ namespace OWASP.WebGoat.NET.App_Code.DB
 
         public DataSet GetCustomerEmails(string email)
         {
-            string sql = "select email from CustomerLogin where email like '" + email + "%'";
-            
+            //string sql = "select email from CustomerLogin where email like '" + email + "%'";
+            string sql = "select email from CustomerLogin where email like @email%";
             
             using (MySqlConnection connection = new MySqlConnection(_connectionString))
             {
                 MySqlDataAdapter da = new MySqlDataAdapter(sql, connection);
+                da.SelectCommand.Parameters.AddWithValue("@email", email);
                 DataSet ds = new DataSet();
                 da.Fill(ds);
 
