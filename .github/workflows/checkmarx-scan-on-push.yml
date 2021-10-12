@@ -37,6 +37,8 @@ jobs:
     # Run CxSAST (and optionally CxSCA) scan with SARIF output
     - name: Checkmarx Scan on Push and create SARIF file
       uses: checkmarx-ts/checkmarx-cxflow-github-action@v1.2 #Github Action version
+      env:
+        _JAVA_OPTIONS: '-Dhttps.proxyHost=1.1.1.1 -Dhttps.proxyPort=1234'
       with:
         project: GitHub-WebGoat.NET-${{ steps.get-branch.outputs.branch }}
         team: /CxServer/SP/ANZ/WebGoat-DotNET
